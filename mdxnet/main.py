@@ -64,8 +64,29 @@ class MDX:
 
         self.ort = ort.InferenceSession(model_path, providers=self.provider)
         self.ort.run(None, {'input': torch.rand(1, 4, params.dim_f, params.dim_t).numpy()})
-        self.process = lambda spec: self.ort.run(None, {'input': spec.cpu().numpy()})[0]
+        
+        if processor >= 0:
+            self.process = self._process_gpu
+        else:
+            self.process = self._process_cpu
+
         self.prog = None
+
+    def _process_gpu(self, spec: torch.Tensor) -> torch.Tensor:
+        # Convert PyTorch tensor to DLPack
+        dlpack = torch.utils.dlpack.to_dlpack(spec)
+        # Create OrtValue from DLPack
+        ort_value = ort.OrtValue.from_dlpack(dlpack)
+        # Run inference
+        output = self.ort.run(None, {'input': ort_value})[0]
+        # Convert output OrtValue to PyTorch tensor
+        output_dlpack = output.to_dlpack()
+        output_tensor = torch.utils.dlpack.from_dlpack(output_dlpack)
+        return output_tensor
+
+    def _process_cpu(self, spec: torch.Tensor) -> np.ndarray:
+        # For CPU, directly use numpy array
+        return self.ort.run(None, {'input': spec.cpu().numpy()})[0]
 
     @staticmethod
     def get_hash(model_path):
@@ -121,8 +142,10 @@ class MDX:
             for mix_wave in mix_waves:
                 self.prog.update()
                 spec = self.model.stft(mix_wave)
-                processed_spec = torch.tensor(self.process(spec))
-                processed_wav = self.model.istft(processed_spec.to(self.device))
+                processed_spec = self.process(spec)
+                if isinstance(processed_spec, np.ndarray):
+                    processed_spec = torch.tensor(processed_spec, device=self.device)
+                processed_wav = self.model.istft(processed_spec)
                 processed_wav = processed_wav[:, :, trim:-trim].transpose(0, 1).reshape(2, -1).cpu().numpy()
                 pw.append(processed_wav)
         processed_signal = np.concatenate(pw, axis=-1)[:, :-pad]
@@ -189,7 +212,7 @@ class MDXProcessor:
                 vram_gb = torch.cuda.get_device_properties(self.device).total_memory / (1024 ** 3)
                 m_threads = 1 if vram_gb < 8 else 2
             else:
-                m_threads = 1
+                m_threads = max(1, os.cpu_count() // 2)
 
         wave, sr = librosa.load(input_path, mono=False, sr=44100)
         peak = max(np.max(wave), abs(np.min(wave)))
@@ -224,4 +247,3 @@ class MDXProcessor:
         del wave_processed, wave
         gc.collect()
         return main_filepath, invert_filepath
-
