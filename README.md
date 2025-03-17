@@ -23,7 +23,7 @@ mdxnet-run --input input_audio.wav --model path/to/model.onnx --output output_di
 
 
 ```
-from mdxnet.mdx_runner import MDXRunner
+from mdxnet import MDXRunner
 
 model_params = {
     # Add your model parameter dictionary here
