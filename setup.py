@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mdxnet",
-    version="1.0.0",
+    version="1.1.0",
     author="Your Name",
     author_email="",
     description="Ultimate Vocal Remover using MDX Net",
