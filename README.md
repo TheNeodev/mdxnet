@@ -4,6 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://python.org)
 [![GitHub](https://img.shields.io/badge/GitHub-TheNeodev%2Fmdxnet-blue.svg)](https://github.com/TheNeodev/mdxnet)
+[![GitHub](https://img.shields.io/badge/GitHub-Original%20Owner%3A%20MDX%20NET-blue?logo=github&style=flat-square
+)](https://github.com/kuielab/mdx-net)
+
+
+
 
 MDXNet is a high-quality vocal separation tool that uses the MDX Net architecture. It leverages GPU acceleration (when available) and multi-threaded processing to deliver fast and efficient separation of vocals from audio files.
 
