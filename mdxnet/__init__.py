@@ -1,1 +1,1 @@
-from .main import MDXRunner
+from .main import MDXProcessor
